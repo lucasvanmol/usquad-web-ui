@@ -5,21 +5,31 @@ import { Context } from "./updateObject";
 export class PlayerManager {
     players : Player[] = [];
 
-    circle_width = 7; // radius of player circle
-    theta = Math.PI/6; // angle between players
+    circle_radius_min = 7;      // min radius of player circle
+    circle_angle_max = Math.PI; // max angle between first and last player
+    arc_dist = 2;               // arc distance between adjacent players
 
     constructor() {
     }
 
     updatePlayerPositions() {
+        var circle_radius = this.circle_radius_min;
+        // Increase circle radius if there are too many players
+        if (this.arc_dist * this.players.length > this.circle_radius_min * this.circle_angle_max) {
+            circle_radius  = this.arc_dist * this.players.length / this.circle_angle_max;
+        }
+
+        // Angle between players based on arc distance and circle radius
+        var theta = this.arc_dist / circle_radius;
+
         // Get starting angle based on num players
-        var angle = Math.PI/2 - (this.theta/2 * (this.players.length-1));
-        
+        var angle = Math.PI/2 - (theta/2 * (this.players.length-1));
+
         this.players.forEach(player => {
             // Set player position on circle & rotate to face center
             player.rotation = new Vector3(0, -angle - Math.PI/2, 0) ;
-            player.position = new Vector3(Math.cos(angle), 0, Math.sin(angle)).multiplyScalar(this.circle_width);
-            angle += this.theta;
+            player.position = new Vector3(Math.cos(angle), 0, Math.sin(angle)).multiplyScalar(circle_radius);
+            angle += theta;
         });
         
     }
