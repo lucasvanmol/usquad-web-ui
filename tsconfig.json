@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+
+    "target": "es6",
+    "moduleResolution": "node",
+  },
+  "include": ["./src/**/*.ts"],
+}
