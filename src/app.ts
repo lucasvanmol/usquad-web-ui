@@ -53,8 +53,17 @@ var context : Context = {
     camera: camera,
     renderer: renderer,
     objList: objects,
-}
+};
 
+THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
+    console.log(`Loading (${loaded}/${total}): ${url}`);
+};
+THREE.DefaultLoadingManager.onError = (url) => {
+    console.log(`Error loading: ${url}`);
+};
+THREE.DefaultLoadingManager.onLoad = () => {
+    console.log(`Loading Complete`);
+};
 
 ///// LIGHTING //////
 
@@ -117,23 +126,37 @@ var playerManager = new PlayerManager();
 var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
 addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player", context) });
 
-const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
-const groundMaterial = new THREE.MeshPhysicalMaterial( {color: 0xffff00} );
-const ground = new THREE.Mesh( groundGeometry, groundMaterial );
-ground.position.set(0, -0.25, 0);
-scene.add( ground );
+function load_ground() {
+    const loader = new THREE.TextureLoader();
+    const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
+    const groundMaterial = new THREE.MeshPhysicalMaterial( {
+        //color: 0xffff00,
+        map: loader.load('assets/wood_planks.jpg', ( texture ) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.x = 3;
+            texture.repeat.y = 3;
+        }),
+    });
+    const ground = new THREE.Mesh( groundGeometry, groundMaterial );
+    ground.position.set(0, -0.25, 0);
+    scene.add( ground );
+    
+    const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+    const planeMaterial = new THREE.MeshPhysicalMaterial( {color: 0x222222} );
+    const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+    plane.visible = false;
+    plane.rotation.x = -Math.PI/2;
+    plane.position.set(0, -0.20, 0);
+    scene.add(plane);
+    
+    const objFolder = gui.addFolder('Objects');
+    objFolder.add(ground, 'visible').name('Stage Enabled');
+    objFolder.add(plane, 'visible').name('Plane Enabled');
 
-const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
-const planeMaterial = new THREE.MeshPhysicalMaterial( {color: 0xcccccc} );
-const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-plane.visible = false;
-plane.rotation.x = -Math.PI/2;
-plane.position.set(0, -0.20, 0);
-scene.add(plane);
+}
+load_ground();
 
-const objFolder = gui.addFolder('Objects');
-objFolder.add(ground, 'visible').name('Stage Enabled');
-objFolder.add(plane, 'visible').name('Plane Enabled');
 
 ////// SKYBOX ///////
 
