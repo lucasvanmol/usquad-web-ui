@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { MQTTClient } from "./mqtt";
 import { PlayerManager } from './playerManager';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
-
+import { Texture, WebGLCubeRenderTarget } from "three";
 ///// MQTT SETUP //////
 
 var client = new MQTTClient(
@@ -22,9 +23,12 @@ pubButton.addEventListener('click', () => { _btnPublish(client)} );
 
 ///// SCENE, RENDERER, CAMERA, CONTROLS SETUP //////
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer( {antialias: true} );
+renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -40,8 +44,17 @@ const camera = new THREE.PerspectiveCamera(
     0.1, 1000                                   // Near / Far Clip
 );
 camera.position.set(0,8,16);
+
 const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
+controls.enablePan = false;
 controls.target.set(0, 0.5, 0);
+controls.minPolarAngle = controls.getPolarAngle();
+controls.maxPolarAngle = controls.getPolarAngle();
+let dist = camera.position.distanceTo(controls.target);
+controls.minDistance = dist;
+controls.maxDistance = dist;
 camera.updateMatrixWorld();
 
 var context : Context = {
@@ -49,8 +62,17 @@ var context : Context = {
     camera: camera,
     renderer: renderer,
     objList: objects,
-}
+};
 
+THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
+    console.log(`Loading (${loaded}/${total}): ${url}`);
+};
+THREE.DefaultLoadingManager.onError = (url) => {
+    console.log(`Error loading: ${url}`);
+};
+THREE.DefaultLoadingManager.onLoad = () => {
+    console.log(`Loading Complete`);
+};
 
 ///// LIGHTING //////
 
@@ -70,11 +92,13 @@ class ColorGUIHelper {
 const ambientColor = 0xFFFFFF;
 const ambiIntensity = 0.5;
 const ambilight = new THREE.AmbientLight(ambientColor, ambiIntensity);
+ambilight.visible = false;
 scene.add(ambilight);
 
-const ambiFolder = gui.addFolder("Hemisphere Light");
+const ambiFolder = gui.addFolder("Ambient Light");
 ambiFolder.addColor(new ColorGUIHelper(ambilight, 'color'), 'value').name('amibientColor');
 ambiFolder.add(ambilight, 'intensity', 0, 2, 0.01);
+ambiFolder.add(ambilight, 'visible').name('enabled');
 //ambiFolder.open()
 
 // Directional light
@@ -86,6 +110,7 @@ dirlight.target.position.set(-5, 0, 0);
 scene.add(dirlight);
 scene.add(dirlight.target);
 const helper = new THREE.DirectionalLightHelper(dirlight);
+dirlight.visible = false;
 helper.visible = false;
 scene.add(helper);
 
@@ -95,6 +120,7 @@ dirlightFolder.add(dirlight, 'intensity', 0, 2, 0.01);
 dirlightFolder.add(dirlight.target.position, 'x', -10, 10).onChange(updateDirlight);
 dirlightFolder.add(dirlight.target.position, 'y', -10, 10).onChange(updateDirlight);
 dirlightFolder.add(dirlight.target.position, 'z', -10, 10).onChange(updateDirlight);
+dirlightFolder.add(dirlight, 'visible').name('enabled');
 dirlightFolder.add(helper, 'visible').onChange(updateDirlight).name('debug');
 //dirlightFolder.open();
 function updateDirlight() {
@@ -105,15 +131,64 @@ updateDirlight();
 
 ////// ASSETS //////
 
-var playerManager = new PlayerManager;
+var playerManager = new PlayerManager();
 var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
-addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player", context) } )
+addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player", context) });
 
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshPhongMaterial( {color: 0x00cc00} );
-const cube = new THREE.Mesh( geometry, material );
-cube.position.set(0, 0.5, 0);
-scene.add( cube );
+function load_ground() {
+    const loader = new THREE.TextureLoader();
+    const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
+    const groundMaterial = new THREE.MeshPhysicalMaterial( {
+        //color: 0xffff00,
+        map: loader.load('assets/wood_planks.jpg', ( texture ) => {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.x = 3;
+            texture.repeat.y = 3;
+        }),
+    });
+    const ground = new THREE.Mesh( groundGeometry, groundMaterial );
+    ground.position.set(0, -0.25, 0);
+    scene.add( ground );
+    
+    const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
+    const planeMaterial = new THREE.MeshBasicMaterial( {color: 0x777777} );
+    const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+    plane.visible = false;
+    plane.rotation.x = -Math.PI/2;
+    plane.position.set(0, -0.20, 0);
+    plane.matrixAutoUpdate = false; //static object
+    plane.updateMatrix();
+    scene.add(plane);
+    
+    const objFolder = gui.addFolder('Objects');
+    objFolder.add(ground, 'visible').name('Stage Enabled');
+    objFolder.add(plane, 'visible').name('Plane Enabled');
+}
+load_ground();
+
+////// SKYBOX ///////
+
+const pmremGenerator = new THREE.PMREMGenerator( renderer );
+const loader = new RGBELoader();
+
+// 'assets/gamrig_1k.hdr'
+// 'assets/st_fagans_interior_1k.hdr'
+loader.load('assets/gamrig_1k.hdr', ( texture ) => {
+    var options = {
+        generateMipmaps: true,
+        minFilter: THREE.LinearMipmapLinearFilter,
+        magFilter: THREE.LinearFilter,
+    };
+    
+    const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+    scene.background = envMap;
+    scene.environment = envMap;
+
+    texture.dispose();
+    pmremGenerator.dispose();
+});
 
 window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
