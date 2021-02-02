@@ -44,8 +44,17 @@ const camera = new THREE.PerspectiveCamera(
     0.1, 1000                                   // Near / Far Clip
 );
 camera.position.set(0,8,16);
+
 const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
+controls.enablePan = false;
 controls.target.set(0, 0.5, 0);
+controls.minPolarAngle = controls.getPolarAngle();
+controls.maxPolarAngle = controls.getPolarAngle();
+let dist = camera.position.distanceTo(controls.target);
+controls.minDistance = dist;
+controls.maxDistance = dist;
 camera.updateMatrixWorld();
 
 var context : Context = {
@@ -143,20 +152,20 @@ function load_ground() {
     scene.add( ground );
     
     const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
-    const planeMaterial = new THREE.MeshPhysicalMaterial( {color: 0x222222} );
+    const planeMaterial = new THREE.MeshBasicMaterial( {color: 0x777777} );
     const plane = new THREE.Mesh( planeGeometry, planeMaterial );
     plane.visible = false;
     plane.rotation.x = -Math.PI/2;
     plane.position.set(0, -0.20, 0);
+    plane.matrixAutoUpdate = false; //static object
+    plane.updateMatrix();
     scene.add(plane);
     
     const objFolder = gui.addFolder('Objects');
     objFolder.add(ground, 'visible').name('Stage Enabled');
     objFolder.add(plane, 'visible').name('Plane Enabled');
-
 }
 load_ground();
-
 
 ////// SKYBOX ///////
 
