@@ -14,7 +14,7 @@ export class Player extends UpdateObject {
     _rotation : Vector3;
     _position : Vector3;
 
-    constructor ( name : string, context : Context, onLoad?: () => void) {
+    constructor ( name : string, context : Context) {
         super(context);
         this.name = name;
 
