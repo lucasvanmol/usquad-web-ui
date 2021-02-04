@@ -1,4 +1,4 @@
-import { AnimationMixer, Vector3 } from 'three';
+import { AnimationMixer, Object3D, Vector3 } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Billboard } from './billboard';
 import { UpdateObject, Context } from './updateObject';
@@ -6,54 +6,60 @@ import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils'
 
 export class Player extends UpdateObject {
     static gltf : GLTF;
-
+    static model_scale = 2
+    static nametag_height = 1.25;
     name : string;
-    model : any;
+    model : Object3D;
     mixer : AnimationMixer;
     nametag : Billboard;
-    _rotation : Vector3;
-    _position : Vector3;
 
-    constructor ( name : string, context : Context, onLoad?: () => void) {
+    constructor ( name : string, context : Context) {
         super(context);
         this.name = name;
 
         this.nametag = new Billboard(name, new Vector3(0, 0, 0), context);
 
         this.model = SkeletonUtils.clone(Player.gltf.scene);
-        this.model.scale.set( 2, 2, 2);
+        this.model.scale.set( Player.model_scale, Player.model_scale, Player.model_scale );
+        context.scene.add( this.model );
+       
         this.mixer = new AnimationMixer( this.model );
         var action = this.mixer.clipAction(Player.gltf.animations[0]);
         action.play();
-
-        context.scene.add( this.model );
     }
 
     set rotation(val: Vector3) {
-        this._rotation = val;
         if (this.model) {
             this.model.rotation.set(val.x, val.y, val.z);
         }
     }
 
     get rotation() {
-        return this._rotation;
+        return this.model.rotation.toVector3();
     }
 
     set position(val: Vector3) {
-        this._position = val;
         if (this.model) {
             this.model.position.set(val.x, val.y, val.z);
+            this.nametag.position.copy(this.model.position).y += Player.nametag_height * this.scale;
         }
     }
 
     get position() {
-        return this._position;
+        return this.model.position;
+    }
+
+    set scale(val : number) {
+        this.model.scale.set(val, val, val);
+        this.nametag.position.copy(this.model.position).y += Player.nametag_height * this.scale;
+    }
+
+    get scale() {
+        return this.model.scale.x;
     }
 
     update(delta : number) {
         if (this.mixer) { this.mixer.update( delta ) };
-        if (this._position) {  this.nametag.position.copy(this._position).y += 2.5};
     }
 }
 
