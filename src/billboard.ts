@@ -24,7 +24,7 @@ export class Billboard extends UpdateObject {
         this.textElement.style.borderRadius = '10px';
         this.textElement.innerHTML = text;
         document.body.appendChild(this.textElement);
-    };
+    }
 
 
     update(delta : number) {

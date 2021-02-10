@@ -5,10 +5,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
-import { Texture, WebGLCubeRenderTarget } from "three";
 ///// MQTT SETUP //////
 
-var client = new MQTTClient(
+var mqttclient = new MQTTClient(
     "broker.emqx.io", 8083, 
     "clientId",
     onMessageArrived
@@ -16,10 +15,10 @@ var client = new MQTTClient(
 
 // Connect subscribe & publish buttons
 var subButton : HTMLDivElement = <HTMLDivElement>document.getElementById("subscribe-button");
-subButton.addEventListener('click', () => { _btnSubscribe(client)} );
+subButton.addEventListener('click', () => { _btnSubscribe(mqttclient)} );
 
 var pubButton : HTMLDivElement = <HTMLDivElement>document.getElementById("publish-button");
-pubButton.addEventListener('click', () => { _btnPublish(client)} );
+pubButton.addEventListener('click', () => { _btnPublish(mqttclient)} );
 
 ///// SCENE, RENDERER, CAMERA, CONTROLS SETUP //////
 
@@ -136,11 +135,11 @@ var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElement
 addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player", context) });
 
 function load_ground() {
-    const loader = new THREE.TextureLoader();
+    const texLoader = new THREE.TextureLoader();
     const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
     const groundMaterial = new THREE.MeshPhysicalMaterial( {
         //color: 0xffff00,
-        map: loader.load('assets/wood_planks.jpg', ( texture ) => {
+        map: texLoader.load('assets/wood_planks.jpg', ( texture ) => {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.x = 3;
@@ -175,12 +174,6 @@ const loader = new RGBELoader();
 // 'assets/gamrig_1k.hdr'
 // 'assets/st_fagans_interior_1k.hdr'
 loader.load('assets/gamrig_1k.hdr', ( texture ) => {
-    var options = {
-        generateMipmaps: true,
-        minFilter: THREE.LinearMipmapLinearFilter,
-        magFilter: THREE.LinearFilter,
-    };
-    
     const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
     scene.background = envMap;
@@ -196,7 +189,7 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     render();
-};
+}
 
 var animate = function () {
     requestAnimationFrame(animate);
