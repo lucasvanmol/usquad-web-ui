@@ -10,14 +10,15 @@ import { Context, UpdateObject } from "./updateObject";
 var mqttclient = new MQTTClient(
     "broker.emqx.io", 8083, 
     "clientId",
-    onMessageArrived
+    onMessageArrived,
+    onMQTTConnect,
 );
 
 // Connect subscribe & publish buttons
-var subButton : HTMLDivElement = <HTMLDivElement>document.getElementById("subscribe-button");
+var subButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("subscribe-button");
 subButton.addEventListener('click', () => { _btnSubscribe(mqttclient)} );
 
-var pubButton : HTMLDivElement = <HTMLDivElement>document.getElementById("publish-button");
+var pubButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("publish-button");
 pubButton.addEventListener('click', () => { _btnPublish(mqttclient)} );
 
 ///// SCENE, RENDERER, CAMERA, CONTROLS SETUP //////
@@ -62,6 +63,7 @@ var context : Context = {
     renderer: renderer,
     objList: objects,
 };
+UpdateObject.context = context;
 
 THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
     console.log(`Loading (${loaded}/${total}): ${url}`);
@@ -222,6 +224,12 @@ function onMessageArrived(message : any) {
     if (cmd[0] === "add") {
         playerManager.addPlayer(cmd[1], context);
     } 
+}
+
+function onMQTTConnect() {
+    console.log("Connected to " + mqttclient.host + ":" + mqttclient.port);
+    subButton.disabled = false;
+    pubButton.disabled = false;
 }
 
 function _btnPublish(client : MQTTClient) {

@@ -2,9 +2,13 @@ import * as MQTT from 'paho-mqtt';
 
 export class MQTTClient {
     client : MQTT.Client;
+    host : string;
+    port : number;
 
-    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void) {
+    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void, onConnectCallback? : () => void) {
         this.client = new MQTT.Client(host, port, clientID);
+        this.host = host;
+        this.port = port;
 
         // Callback handlers
         this.client.onConnectionLost = this._onConnectionLost;
@@ -12,7 +16,7 @@ export class MQTTClient {
 
         this.client.connect({
             timeout: 3,
-            onSuccess: this._onConnect,
+            onSuccess: onConnectCallback || this._onConnect,
             onFailure: this._onFailure,
         });
     }
