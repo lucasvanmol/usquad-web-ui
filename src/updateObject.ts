@@ -8,14 +8,9 @@ export interface Context {
 }
 
 export abstract class UpdateObject {
-    scene : Scene;
-    camera : Camera;
-    renderer : Renderer;
+    static context : Context;
     constructor (context : Context) {
-        this.scene = context.scene;
-        this.camera = context.camera;
-        this.renderer = context.renderer;
-        context.objList.push(this);
+        UpdateObject.context.objList.push(this);
     }
     abstract update(delta : number): void;
 }

@@ -10,6 +10,7 @@ export class Player extends UpdateObject {
     static nametag_height = 1.25;
     name : string;
     model : Object3D;
+    model_loaded : boolean = false;
     mixer : AnimationMixer;
     nametag : Billboard;
 
@@ -19,9 +20,16 @@ export class Player extends UpdateObject {
 
         this.nametag = new Billboard(name, new Vector3(0, 0, 0), context);
 
+        if (Player.gltf) {
+            this.set_model();
+        }
+    }
+
+    set_model() {
+        this.model_loaded = true;
         this.model = SkeletonUtils.clone(Player.gltf.scene);
         this.model.scale.set( Player.model_scale, Player.model_scale, Player.model_scale );
-        context.scene.add( this.model );
+        UpdateObject.context.scene.add( this.model );
        
         this.mixer = new AnimationMixer( this.model );
         var action = this.mixer.clipAction(Player.gltf.animations[0]);
@@ -50,8 +58,10 @@ export class Player extends UpdateObject {
     }
 
     set scale(val : number) {
-        this.model.scale.set(val, val, val);
-        this.nametag.position.copy(this.model.position).y += Player.nametag_height * this.scale;
+        if (this.model) {
+            this.model.scale.set(val, val, val);
+            this.nametag.position.copy(this.model.position).y += Player.nametag_height * this.scale;
+        }
     }
 
     get scale() {
@@ -59,7 +69,8 @@ export class Player extends UpdateObject {
     }
 
     update(delta : number) {
-        if (this.mixer) { this.mixer.update( delta ) };
+        if (this.mixer) { this.mixer.update( delta ) }
+        if (!this.model_loaded && Player.gltf) { this.set_model() }
     }
 }
 

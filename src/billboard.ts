@@ -3,14 +3,16 @@ import { UpdateObject, Context } from "./updateObject";
 
 export class Billboard extends UpdateObject {
     position : Vector3;
-    canvas: HTMLCanvasElement;
+    static canvas: HTMLCanvasElement;
     textElement: HTMLDivElement;
+    textOffsetWidth: number;
+    textOffsetHeight: number;
     _visible: boolean = true;
 
     constructor (text: string, position: Vector3, context : Context) {
         super(context);
         this.position = position;
-        this.canvas = this.renderer.domElement;
+        Billboard.canvas = UpdateObject.context.renderer.domElement;
 
     
         this.textElement = document.createElement('div');
@@ -24,21 +26,23 @@ export class Billboard extends UpdateObject {
         this.textElement.style.borderRadius = '10px';
         this.textElement.innerHTML = text;
         document.body.appendChild(this.textElement);
-    };
+        this.textOffsetWidth = this.textElement.offsetWidth;
+        this.textOffsetHeight = this.textElement.offsetHeight;
+    }
 
 
     update(delta : number) {
         var position2D = new Vector3().copy(this.position);
         // map to normalized device coordinate (NDC) space
-        position2D.project( this.camera );
+        position2D.project( UpdateObject.context.camera );
 
         // map to 2D screen space
-        position2D.x = Math.round( (   position2D.x + 1 ) * this.canvas.width  / 2 );
-        position2D.y = Math.round( ( - position2D.y + 1 ) * this.canvas.height / 2 );
+        position2D.x = Math.round( (   position2D.x + 1 ) * Billboard.canvas.width  / 2 );
+        position2D.y = Math.round( ( - position2D.y + 1 ) * Billboard.canvas.height / 2 );
     
         var elemCoords = {
-            x: position2D.x - this.textElement.offsetWidth / 2,
-            y: position2D.y - this.textElement.offsetHeight / 2
+            x: position2D.x - this.textOffsetWidth / 2,
+            y: position2D.y - this.textOffsetHeight /2
         }
         this.textElement.style.left = elemCoords.x + 'px';
         this.textElement.style.top = elemCoords.y + 'px';
