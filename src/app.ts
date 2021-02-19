@@ -5,11 +5,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
+import config from './config'; 
+
 ///// MQTT SETUP //////
 
 var mqttclient = new MQTTClient(
-    "broker.emqx.io", 8083, 
-    "clientId",
+    config.host, config.port, 
+    config.clientID,
     onMessageArrived,
     onMQTTConnect,
 );
