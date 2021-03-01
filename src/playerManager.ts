@@ -1,6 +1,5 @@
 import { Player } from "./player";
 import { Vector3 } from "three";
-import { Context } from "./updateObject";
 
 export class PlayerManager {
     players : Player[] = [];
@@ -9,14 +8,11 @@ export class PlayerManager {
     circle_angle_max = Math.PI; // max angle between first and last player
     arc_dist = 2;               // arc distance between adjacent players
 
-    constructor() {
-    }
-
     updatePlayerPositions() {
         var dist = this.arc_dist;
         var scale = Player.model_scale;
 
-        // Increase circle radius if there are too many players
+        // Decrease player size if there are too many players
         if (this.arc_dist * this.players.length > this.circle_radius * this.circle_angle_max) {
             dist = this.circle_radius * this.circle_angle_max / this.players.length;
             scale *= (dist / this.arc_dist);
@@ -38,8 +34,8 @@ export class PlayerManager {
         
     }
 
-    addPlayer(name: string, context : Context) {
-        this.players.push(new Player(name, context));
+    addPlayer(name: string) {
+        this.players.push(new Player(name));
         this.updatePlayerPositions();
     }
 }

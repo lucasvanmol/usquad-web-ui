@@ -9,8 +9,17 @@ export interface Context {
 
 export abstract class UpdateObject {
     static context : Context;
-    constructor (context : Context) {
+    
+    constructor () {
         UpdateObject.context.objList.push(this);
     }
+
     abstract update(delta : number): void;
+
+    destroy() {
+        var index = UpdateObject.context.objList.indexOf(this);
+        if (index !== -1) {
+            UpdateObject.context.objList.splice(index, 1);
+        }
+    }
 }

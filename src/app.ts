@@ -11,17 +11,17 @@ import config from './config';
 
 var mqttclient = new MQTTClient(
     config.host, config.port, 
-    config.clientID,
+    config.clientID + ":" + Math.random().toString(36).substr(2, 5), // unique clientID to prevent reconnect loop
     onMessageArrived,
     onMQTTConnect,
 );
 
 // Connect subscribe & publish buttons
 var subButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("subscribe-button");
-subButton.addEventListener('click', () => { _btnSubscribe(mqttclient)} );
+subButton.addEventListener('click', () => { _btnSubscribe()} );
 
 var pubButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("publish-button");
-pubButton.addEventListener('click', () => { _btnPublish(mqttclient)} );
+pubButton.addEventListener('click', () => { _btnPublish()} );
 
 ///// SCENE, RENDERER, CAMERA, CONTROLS SETUP //////
 
@@ -109,11 +109,11 @@ const dirColor = 0xFFFFFF;
 const dirIntensity = 1.35;
 const dirlight = new THREE.DirectionalLight(dirColor, dirIntensity);
 dirlight.position.set(0, 10, 0);
-dirlight.target.position.set(-5, 0, 0);
+dirlight.target.position.set(0, 9, 9);
 scene.add(dirlight);
 scene.add(dirlight.target);
 const helper = new THREE.DirectionalLightHelper(dirlight);
-dirlight.visible = false;
+dirlight.visible = true;
 helper.visible = false;
 scene.add(helper);
 
@@ -136,13 +136,12 @@ updateDirlight();
 
 var playerManager = new PlayerManager();
 var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
-addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player", context) });
+addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player") });
 
 function load_ground() {
     const texLoader = new THREE.TextureLoader();
     const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
     const groundMaterial = new THREE.MeshPhysicalMaterial( {
-        //color: 0xffff00,
         map: texLoader.load('assets/wood_planks.jpg', ( texture ) => {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
@@ -220,27 +219,57 @@ function onMessageArrived(message : any) {
     let subs : HTMLInputElement = <HTMLInputElement>document.getElementById('subscriptions');
     subs.innerHTML = "[" + message.destinationName + "]: " + message.payloadString + "<br />";
     
+    command_handler(message.payloadString)
+}
+
+function command_handler(msg) {
     // Commands:
-    // add playerName - add new player
-    let cmd = message.payloadString.split(" ");
-    if (cmd[0] === "add") {
-        playerManager.addPlayer(cmd[1], context);
-    } 
+    // add playerName                       - add new player
+    // skin playerID skinName               - change skin of playerID
+    // anim playerID anim                   - change animation of playerID
+    // say playerID word1 word2 word3       - playerID says word1 word2 word3
+    let cmd = msg.split(" ");
+
+    if (cmd[0] !== "add" && !(cmd[1] in playerManager.players)) {
+        console.warn(`${msg}: no player with ID ${cmd[1]}`)
+    }
+
+    switch (cmd[0]) {
+        case "add":
+            playerManager.addPlayer(cmd[1]);
+            break;
+        case "skin":
+            playerManager.players[cmd[1]].skin = cmd[2];
+            break;
+
+        case "anim":
+            playerManager.players[cmd[1]].change_animation(cmd[2]);
+            break;
+
+        case "say":
+            playerManager.players[cmd[1]].say(cmd.slice(2).join(" "));
+            break;
+
+        default:
+            console.warn(`${msg} was not a recognized command`)
+            break;
+    }
 }
 
 function onMQTTConnect() {
     console.log("Connected to " + mqttclient.host + ":" + mqttclient.port);
+    mqttclient.subscribe("iot");
     subButton.disabled = false;
     pubButton.disabled = false;
 }
 
-function _btnPublish(client : MQTTClient) {
+function _btnPublish() {
     let topic = (<HTMLInputElement>document.getElementById("pub-topic")).value;
     let payload = (<HTMLInputElement>document.getElementById("pub-payload")).value;
-    client.publish(topic, payload);
+    mqttclient.publish(topic, payload);
 }
 
-function _btnSubscribe(client : MQTTClient) {
+function _btnSubscribe() {
     let topic = (<HTMLInputElement>document.getElementById("sub-topic")).value;
-    client.subscribe(topic);
+    mqttclient.subscribe(topic);
 }

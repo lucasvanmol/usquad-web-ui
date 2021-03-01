@@ -15,9 +15,10 @@ export class MQTTClient {
         this.client.onMessageArrived = messageArrivedCallback;
 
         this.client.connect({
-            timeout: 3,
+            timeout: 10,
             onSuccess: onConnectCallback || this._onConnect,
             onFailure: this._onFailure,
+            reconnect: true,
         });
     }
 
@@ -27,7 +28,7 @@ export class MQTTClient {
       
     _onConnectionLost(responseObject : any) {
         if (responseObject.errorCode !== 0) {
-          console.log("Connection lost:" + responseObject.errorMessage);
+            console.log("Connection lost:" + responseObject.errorMessage);
         }
     }
 
