@@ -6,6 +6,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
 import config from './config'; 
+import { Color } from "three";
 
 ///// MQTT SETUP //////
 
@@ -50,13 +51,13 @@ camera.position.set(0,8,16);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-controls.enablePan = false;
+//controls.enablePan = false;
 controls.target.set(0, 0.5, 0);
-controls.minPolarAngle = controls.getPolarAngle();
-controls.maxPolarAngle = controls.getPolarAngle();
+//controls.minPolarAngle = controls.getPolarAngle();
+//controls.maxPolarAngle = controls.getPolarAngle();
 let dist = camera.position.distanceTo(controls.target);
-controls.minDistance = dist;
-controls.maxDistance = dist;
+//controls.minDistance = dist;
+//controls.maxDistance = dist;
 camera.updateMatrixWorld();
 
 var context : Context = {
@@ -151,10 +152,11 @@ function load_ground() {
     });
     const ground = new THREE.Mesh( groundGeometry, groundMaterial );
     ground.position.set(0, -0.25, 0);
+    ground.visible = false;
     scene.add( ground );
     
     const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
-    const planeMaterial = new THREE.MeshBasicMaterial( {color: 0x777777} );
+    const planeMaterial = new THREE.MeshBasicMaterial( {color: 0xf5ca6e} );
     const plane = new THREE.Mesh( planeGeometry, planeMaterial );
     plane.visible = false;
     plane.rotation.x = -Math.PI/2;
@@ -179,7 +181,8 @@ const loader = new RGBELoader();
 loader.load('assets/gamrig_1k.hdr', ( texture ) => {
     const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
-    scene.background = envMap;
+    //scene.background = envMap;
+    scene.background = new Color( 0xf5ca6e );
     scene.environment = envMap;
 
     texture.dispose();
