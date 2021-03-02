@@ -50,13 +50,13 @@ camera.position.set(0,8,16);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-controls.enablePan = false;
+//controls.enablePan = false;
 controls.target.set(0, 0.5, 0);
-controls.minPolarAngle = controls.getPolarAngle();
-controls.maxPolarAngle = controls.getPolarAngle();
+//controls.minPolarAngle = controls.getPolarAngle();
+//controls.maxPolarAngle = controls.getPolarAngle();
 let dist = camera.position.distanceTo(controls.target);
-controls.minDistance = dist;
-controls.maxDistance = dist;
+//controls.minDistance = dist;
+//controls.maxDistance = dist;
 camera.updateMatrixWorld();
 
 var context : Context = {

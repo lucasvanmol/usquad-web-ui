@@ -1,4 +1,4 @@
-import { AnimationClip, AnimationMixer, LoopOnce, Material, Mesh, NoToneMapping, Object3D, sRGBEncoding, TextureLoader, Vector3 } from 'three';
+import { AnimationClip, AnimationMixer, Bone, LoopOnce, Material, Mesh, NoToneMapping, Object3D, sRGBEncoding, TextureLoader, Vector3 } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Billboard } from './billboard';
 import { UpdateObject } from './updateObject';
@@ -12,7 +12,6 @@ import { DialogBox } from './dialogbox';
 // nicer background
 // fix nametags
 // accessories
-// "say" function
 
 interface AnimationInfo {
     animation : AnimationClip,
@@ -23,10 +22,10 @@ interface AnimationInfo {
 export class Player extends UpdateObject {
     static gltf : GLTF;
     static animations = {};
-    static model_scale = 0.7;
+    static model_scale = 2.0;
     static nametag_height = 4.8;
     static dialog_height = 4.8;
-    static anim = 0;
+    static beardmesh;
     name : string;
     model : Object3D;
     model_loaded : boolean = false;
@@ -90,7 +89,7 @@ export class Player extends UpdateObject {
         if (name in skins) {
             var mat; // https://discourse.threejs.org/t/giving-a-glb-a-texture-in-code/15071/6
 
-            this.model.traverse( function( object ) {
+            this.model.traverse( (object) => {
     
                 if ( object instanceof Mesh ) {
                     mat = (<Material>object.material).clone();
@@ -98,6 +97,12 @@ export class Player extends UpdateObject {
                     mat.needsUpdate = true;
                     object.material = mat;
                 } 
+                if ( object instanceof Bone && object.name == "Head") {
+                    let beard = Player.beardmesh.clone();
+                    beard.position.y = 0.25; 
+                    beard.position.z = 0.3;
+                    object.add(beard);
+                }
              
             });
             this._skin = name;
@@ -191,6 +196,11 @@ loader.load(asset_url, ( gltf ) => {
 }, ( reason ) => {
     console.error(`Loading ${asset_url} failed! ${reason}`);
 });
+loader.load('assets/beard.glb', ( gltf ) => {
+
+    Player.beardmesh = gltf.scene;
+
+})
 /*
 loader.loadAsync(asset_url, ( event ) => {
     console.log(`Loading ${asset_url} - ${Math.floor(event.loaded / event.total * 100)}%`);
