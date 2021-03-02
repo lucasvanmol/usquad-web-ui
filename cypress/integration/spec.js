@@ -3,7 +3,6 @@ describe('Usquad UI Test', () => {
         cy.visit('http://localhost:8000/');
         cy.get('#add-player').click();
 
-        //cy.get('#sub-topic').click(); 
         cy.get('#sub-topic').type('usquad');
         cy.get('#subscribe-button').click();
 
