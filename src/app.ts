@@ -214,7 +214,7 @@ updateDirlight();
 
 var playerManager = new PlayerManager();
 var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
-addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player") });
+addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player:"+ Math.random().toString(36).substr(2, 5)) });
 
 function load_ground() {
     const texLoader = new THREE.TextureLoader();
@@ -299,51 +299,74 @@ function onMessageArrived(message : any) {
     let subs : HTMLInputElement = <HTMLInputElement>document.getElementById('subscriptions');
     subs.innerHTML = "[" + message.destinationName + "]: " + message.payloadString + "<br />";
     
-    command_handler(message.payloadString)
+    command_handler(message.destinationName, message.payloadString)
 }
 
-function command_handler(msg) {
-    // Commands:
-    // add playerName                       - add new player
-    // skin playerID skinName               - change skin of playerID
-    // anim playerID anim                   - change animation of playerID
-    // say playerID word1 word2 word3       - playerID says word1 word2 word3
-    let cmd = msg.split(" ");
-
-    if (cmd[0] !== "add" && !(cmd[1] in playerManager.players)) {
-        console.warn(`${msg}: no player with ID ${cmd[1]}`)
+function command_handler(topic, msg) {
+    let cmd_msg_handler = (command: string[], name: string, isTeam: boolean) => {
+        if (isTeam && name in playerManager.teams) {
+            playerManager.teams[name].forEach( (player) => {
+                cmd_msg_handler(command, player.name, false);
+            })
+        } else {
+            console.log(command);
+            switch (command[0]) {
+                case "add":
+                    playerManager.addPlayer(name);
+                    break;
+        
+                case "skin":
+                    playerManager.players[name].skin = command[1];
+                    break;
+        
+                case "anim":
+                    playerManager.players[name].changeAnimation(command[1]);
+                    break;
+        
+                case "say":
+                    playerManager.players[name].say(command.slice(1).join(" "));
+                    break;
+        
+                case "acc":
+                    playerManager.players[name].accessory = command[1];
+                    break;
+        
+                case "team":
+                    playerManager.assignTeam(name, command[1]);
+                    break;
+                
+                default:
+                    console.warn(`${msg} was not a recognized command`)
+                    break;
+            }
+        }
     }
 
-    switch (cmd[0]) {
-        case "add":
-            playerManager.addPlayer(cmd[1]);
-            break;
 
-        case "skin":
-            playerManager.players[cmd[1]].skin = cmd[2];
-            break;
 
-        case "anim":
-            playerManager.players[cmd[1]].change_animation(cmd[2]);
-            break;
+    let cmd_topic = topic.split("/");
+    let cmd = msg.split(",");
 
-        case "say":
-            playerManager.players[cmd[1]].say(cmd.slice(2).join(" "));
-            break;
+    if (cmd_topic.length === 2) {
+        switch (cmd_topic[0]) {
+            case "players":
+                cmd_msg_handler(cmd, cmd_topic[1], false);
+                break;
 
-        case "acc":
-            playerManager.players[cmd[1]].accessory = cmd[2];
-            break;
-
-        default:
-            console.warn(`${msg} was not a recognized command`)
-            break;
+            case "teams":
+                cmd_msg_handler(cmd, cmd_topic[1], true);
+                break;
+        
+            default:
+                break;
+        }
     }
 }
 
 function onMQTTConnect() {
     console.log("Connected to " + mqttclient.host + ":" + mqttclient.port);
-    mqttclient.subscribe("iot");
+    mqttclient.subscribe("players/#");
+    mqttclient.subscribe("teams/#")
     subButton.disabled = false;
     pubButton.disabled = false;
 }

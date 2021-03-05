@@ -1,4 +1,4 @@
-import { AnimationMixer, Bone, Group, LoadingManager, LoopOnce, Material, Mesh,  Object3D, sRGBEncoding, TextureLoader, Vector3 } from 'three';
+import { AnimationMixer, Bone, Group, LoopOnce, Material, Mesh,  Object3D, Vector3 } from 'three';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Billboard } from './billboard';
 import { UpdateObject } from './updateObject';
@@ -17,7 +17,7 @@ import { DialogBox } from './dialogbox';
 export class Player extends UpdateObject {
     static gltf : GLTF;
     static animations = {};
-    static model_scale = 2.0;
+    static model_scale = 0.7;
     static nametag_height = 4.8;
     static dialog_height = 4.8;
     static accessories;
@@ -40,11 +40,11 @@ export class Player extends UpdateObject {
         this.nametag.visible = false;
 
         if (Player.gltf) {
-            this.set_model();
+            this.setModel();
         }
     }
 
-    private set_model() {
+    private setModel() {
         this.model_loaded = true;
         this.model = SkeletonUtils.clone(Player.gltf.scene);
         this.model.scale.set( Player.model_scale, Player.model_scale, Player.model_scale );
@@ -57,10 +57,10 @@ export class Player extends UpdateObject {
 
         this.mixer = new AnimationMixer( this.model );
 
-        this.change_animation("Idle");
+        this.changeAnimation("Idle");
     }
 
-    change_animation(name: string) {
+    changeAnimation(name: string) {
         if (name in Player.animations) {
             let animInfo = Player.animations[name];
             this.mixer.stopAllAction();
@@ -178,6 +178,6 @@ export class Player extends UpdateObject {
 
     update(delta : number) {
         if (this.mixer) { this.mixer.update( delta ) }
-        if (!this.model_loaded && Player.gltf) { this.set_model() }
+        if (!this.model_loaded && Player.gltf) { this.setModel() }
     }
 }
