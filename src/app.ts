@@ -6,13 +6,10 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
 import config from './config'; 
-<<<<<<< HEAD
 import { Color } from "three";
-=======
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { Player } from "./player";
 import * as Accessories from './accessories.json';
->>>>>>> feature-accessories
 
 
 
