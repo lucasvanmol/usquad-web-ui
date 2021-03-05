@@ -238,6 +238,7 @@ function command_handler(msg) {
         case "add":
             playerManager.addPlayer(cmd[1]);
             break;
+
         case "skin":
             playerManager.players[cmd[1]].skin = cmd[2];
             break;
@@ -248,6 +249,10 @@ function command_handler(msg) {
 
         case "say":
             playerManager.players[cmd[1]].say(cmd.slice(2).join(" "));
+            break;
+
+        case "acc":
+            playerManager.players[cmd[1]].set_accessory(cmd[2]);
             break;
 
         default:

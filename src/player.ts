@@ -1,9 +1,10 @@
-import { AnimationClip, AnimationMixer, Bone, LoopOnce, Material, Mesh, NoToneMapping, Object3D, sRGBEncoding, TextureLoader, Vector3 } from 'three';
+import { AnimationClip, AnimationMixer, Bone, LoadingManager, LoopOnce, Material, Mesh,  Object3D, sRGBEncoding, TextureLoader, Vector3 } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Billboard } from './billboard';
 import { UpdateObject } from './updateObject';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils'
 import { DialogBox } from './dialogbox';
+import * as Accessories from './accessories.json';
 
 // TODOs
 // animation chaining - statemachine w/ action.crossFadeFrom()
@@ -18,14 +19,13 @@ interface AnimationInfo {
     loop : boolean,
 }
 
-
 export class Player extends UpdateObject {
     static gltf : GLTF;
     static animations = {};
     static model_scale = 2.0;
     static nametag_height = 4.8;
     static dialog_height = 4.8;
-    static beardmesh;
+    static accessories;
     name : string;
     model : Object3D;
     model_loaded : boolean = false;
@@ -76,6 +76,20 @@ export class Player extends UpdateObject {
         }     
     }
 
+    set_accessory(name: string) {
+        let accessory = Player.accessories[name];
+        this.model.traverse( (object) => {
+            if (object instanceof Bone) { console.log(object.name)}
+            if ( object instanceof Bone && object.name === accessory.bone) {
+                let sc = accessory.scene.clone();
+                sc.position.x = accessory.position.x;
+                sc.position.y = accessory.position.y;
+                sc.position.z = accessory.position.z;
+                object.add(sc);
+            }
+        })
+    }
+
     say(message: string) {
         if (this.dialog_box) {
             this.dialog_box.destroy();
@@ -97,12 +111,6 @@ export class Player extends UpdateObject {
                     mat.needsUpdate = true;
                     object.material = mat;
                 } 
-                if ( object instanceof Bone && object.name == "Head") {
-                    let beard = Player.beardmesh.clone();
-                    beard.position.y = 0.25; 
-                    beard.position.z = 0.3;
-                    object.add(beard);
-                }
              
             });
             this._skin = name;
@@ -176,7 +184,8 @@ const asset_url = 'assets/characterMediumAllAnimations.glb';
 // Animations in gltf.animations that need to be looped
 const loopedAnimations = ["CrouchIdle", "CrouchWalk", "Idle", "RacingIdle", "Run", "Walk", "Jump"]
 
-const loader = new GLTFLoader();
+const manager = new LoadingManager();
+const loader = new GLTFLoader(manager);
 loader.load(asset_url, ( gltf ) => {
 
     Player.gltf = gltf;
@@ -189,18 +198,25 @@ loader.load(asset_url, ( gltf ) => {
         Player.animations[anim.name] = animInfo;
 
     });
-    console.log(Player.animations);
 
 }, ( event ) => {
     console.log(`Loading ${asset_url} - ${Math.floor(event.loaded / event.total * 100)}%`);
 }, ( reason ) => {
     console.error(`Loading ${asset_url} failed! ${reason}`);
 });
-loader.load('assets/beard.glb', ( gltf ) => {
 
-    Player.beardmesh = gltf.scene;
+for (var accessory in Accessories) {
+    let url = `assets/accessories/${accessory}.glb`
+    loader.load(url, (gltf) => {
+        let filename = url.split("/").pop();
+        let accessoryName = filename.split(".")[0];
+        Accessories[accessoryName].scene = gltf.scene;
+    });
+}
+manager.onLoad = () => {
+    Player.accessories = Accessories;
+}
 
-})
 /*
 loader.loadAsync(asset_url, ( event ) => {
     console.log(`Loading ${asset_url} - ${Math.floor(event.loaded / event.total * 100)}%`);
