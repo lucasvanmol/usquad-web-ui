@@ -6,9 +6,17 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
 import config from './config'; 
+<<<<<<< HEAD
 import { Color } from "three";
+=======
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { Player } from "./player";
+import * as Accessories from './accessories.json';
+>>>>>>> feature-accessories
 
-///// MQTT SETUP //////
+
+
+//////////////////////////////////////////// MQTT SETUP ////////////////////////////////////////////
 
 var mqttclient = new MQTTClient(
     config.host, config.port, 
@@ -24,7 +32,9 @@ subButton.addEventListener('click', () => { _btnSubscribe()} );
 var pubButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("publish-button");
 pubButton.addEventListener('click', () => { _btnPublish()} );
 
-///// SCENE, RENDERER, CAMERA, CONTROLS SETUP //////
+
+
+//////////////////////////////// SCENE, RENDERER, CAMERA, CONTROLS /////////////////////////////////
 
 const renderer = new THREE.WebGLRenderer( {antialias: true} );
 renderer.setPixelRatio( window.devicePixelRatio );
@@ -68,17 +78,87 @@ var context : Context = {
 };
 UpdateObject.context = context;
 
-THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
-    console.log(`Loading (${loaded}/${total}): ${url}`);
-};
-THREE.DefaultLoadingManager.onError = (url) => {
+
+
+////////////////////////////////////////// ASSET LOADING ///////////////////////////////////////////
+
+const manager = new THREE.LoadingManager();
+
+manager.onStart = () => {
+    console.log("Load start...");
+}
+
+manager.onProgress = ( url, itemsLoaded, itemsTotal ) => {
+    console.log(`Loading (${itemsLoaded}/${itemsTotal}): ${url}`);
+}
+
+manager.onError = (url) => {
     console.log(`Error loading: ${url}`);
 };
-THREE.DefaultLoadingManager.onLoad = () => {
-    console.log(`Loading Complete`);
-};
 
-///// LIGHTING //////
+///////////////// SKIN TEXTURES //////////////////
+
+var texLoader = new THREE.TextureLoader(manager);
+
+// python:
+// >>> import os
+// >>> os.listdir("assets/skins/")
+let skin_files = ['alienA.png', 'alienB.png', 'animalA.png', 'animalB.png', 'animalBaseA.png', 'animalBaseB.png', 'animalBaseC.png', 'animalBaseD.png', 'animalBaseE.png', 'animalBaseF.png', 'animalBaseG.png', 'animalBaseH.png', 'animalBaseI.png', 'animalBaseJ.png', 'animalC.png', 'animalD.png', 'animalE.png', 'animalF.png', 'animalG.png', 'animalH.png', 'animalI.png', 'animalJ.png', 'astroFemaleA.png', 'astroFemaleB.png', 'astroMaleA.png', 'astroMaleB.png', 'athleteFemaleBlue.png', 'athleteFemaleGreen.png', 'athleteFemaleRed.png', 'athleteFemaleYellow.png', 'athleteMaleBlue.png', 'athleteMaleGreen.png', 'athleteMaleRed.png', 'athleteMaleYellow.png', 'businessMaleA.png', 'businessMaleB.png', 'casualFemaleA.png', 'casualFemaleB.png', 'casualMaleA.png', 'casualMaleB.png', 'cyborg.png', 'fantasyFemaleA.png', 'fantasyFemaleB.png', 'fantasyMaleA.png', 'fantasyMaleB.png', 'farmerA.png', 'farmerB.png', 'militaryFemaleA.png', 'militaryFemaleB.png', 'militaryMaleA.png', 'militaryMaleB.png', 'racerBlueFemale.png', 'racerBlueMale.png', 'racerGreenFemale.png', 'racerGreenMale.png', 'racerOrangeFemale.png', 'racerOrangeMale.png', 'racerPurpleFemale.png', 'racerPurpleMale.png', 'racerRedFemale.png', 'racerRedMale.png', 'robot.png', 'robot2.png', 'robot3.png', 'survivorFemaleA.png', 'survivorFemaleB.png', 'survivorMaleA.png', 'survivorMaleB.png', 'zombieA.png', 'zombieB.png', 'zombieC.png'];
+let skin_directory = "assets/skins/";
+
+let playerSkins = {};
+skin_files.forEach(file => {
+    let map = texLoader.load(skin_directory + file);
+    map.encoding = THREE.sRGBEncoding;
+    map.flipY = false;
+    playerSkins[file.split(".")[0]] = map;
+});
+
+///////////// CHARACTER & ANIMATIONS /////////////
+
+const asset_url = 'assets/characterMediumAllAnimations.glb'; 
+
+// Animations in gltf.animations that need to be looped
+const loopedAnimations = ["CrouchIdle", "CrouchWalk", "Idle", "RacingIdle", "Run", "Walk", "Jump"]
+
+interface AnimationInfo {
+    animation : THREE.AnimationClip,
+    loop : boolean,
+}
+
+const gltfLoader = new GLTFLoader(manager);
+gltfLoader.load(asset_url, ( gltf ) => {
+
+    Player.gltf = gltf;
+
+    gltf.animations.forEach(anim => {
+
+        let animInfo : AnimationInfo = {
+            animation : anim,
+            loop : loopedAnimations.includes(anim.name),
+        };
+
+        Player.animations[anim.name] = animInfo;
+
+    });
+});
+
+for (var accessory in Accessories) {
+    let url = `assets/accessories/${accessory}.glb`
+    gltfLoader.load(url, (gltf) => {
+        let filename = url.split("/").pop();
+        let accessoryName = filename.split(".")[0];
+        Accessories[accessoryName].scene = gltf.scene;
+    });
+}
+manager.onLoad = () => {
+    Player.accessories = Accessories;
+    Player.skins = playerSkins;
+}
+
+
+
+///////////////////////////////////////////// LIGHTING /////////////////////////////////////////////
 
 const gui = new dat.GUI();
 class ColorGUIHelper {
@@ -241,6 +321,7 @@ function command_handler(msg) {
         case "add":
             playerManager.addPlayer(cmd[1]);
             break;
+
         case "skin":
             playerManager.players[cmd[1]].skin = cmd[2];
             break;
@@ -251,6 +332,10 @@ function command_handler(msg) {
 
         case "say":
             playerManager.players[cmd[1]].say(cmd.slice(2).join(" "));
+            break;
+
+        case "acc":
+            playerManager.players[cmd[1]].accessory = cmd[2];
             break;
 
         default:
