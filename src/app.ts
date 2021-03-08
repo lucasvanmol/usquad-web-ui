@@ -304,12 +304,12 @@ function onMessageArrived(message : any) {
     console.log(playerManager.teams);
 }
 
-let _cmdStringAddPlayer = "add";
-let _cmdStringChangeSkin = "skin";
-let _cmdStringChangeAnimation = "anim";
-let _cmdStringSay = "say";
-let _cmdStringChangeAccessory = "acc";
-let _cmdStringAssignTeam = "team";
+const _cmdStringAddPlayer = "add";
+const _cmdStringChangeSkin = "skin";
+const _cmdStringChangeAnimation = "anim";
+const _cmdStringSay = "say";
+const _cmdStringChangeAccessory = "acc";
+const _cmdStringAssignTeam = "team";
 
 function playerCommandHandler(command : string[], playerID : string) {
     switch (command[0]) {
@@ -363,12 +363,15 @@ function teamCommandHandler(command : string[], teamID : string) {
             break;
     
         case "split":
-            // TODO
-            let teamNames = command.splice(1);
-            teamNames.forEach(teamName => {
-                console.log(teamName);
-            });
-            
+            let teamNames = command.splice(1);   
+            let i = 0;
+            let tot = Object.keys(playerManager.players).length;
+            for (let playerName in playerManager.players) {
+                playerManager.assignTeam(playerName, teamNames[Math.floor(i/tot * teamNames.length)]);
+                i++;
+            }
+            break;
+
         case "reset":
             // If teamID is not specified, reset all teams
             if (teamID) {

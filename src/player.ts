@@ -5,15 +5,6 @@ import { UpdateObject } from './updateObject';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils'
 import { DialogBox } from './dialogbox';
 import { Team } from './team';
-import { isTemplateLiteral } from 'typescript';
-
-// TODOs
-// animation chaining - statemachine w/ action.crossFadeFrom()
-// better commands & explicit playerIDs
-// better lighting
-// nicer background
-// fix nametags
-// accessories
 
 
 export class Player extends UpdateObject {

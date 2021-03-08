@@ -67,7 +67,8 @@ export class PlayerManager {
         this.updatePlayerPositions();
     }
 
-    assignTeam(playerName: string, teamName:string) {
+    assignTeam(playerName: string, teamName: string) {
+        console.log(`Adding ${playerName} to ${teamName}`);
         if (playerName in this.players) {
             if (!(teamName in this.teams)) {
                 this.teams[teamName] = new Team(teamName);
