@@ -2,8 +2,9 @@ import { Vector3 } from "three";
 import { UpdateObject } from "./updateObject";
 
 export class Billboard extends UpdateObject {
-    position: Vector3;
     static canvas: HTMLCanvasElement;
+
+    position: Vector3;
     textElement: HTMLDivElement;
     textOffsetWidth: number;
     textOffsetHeight: number;
@@ -11,7 +12,8 @@ export class Billboard extends UpdateObject {
     triangleElement: HTMLDivElement;
     triangleSize = 10;
     color = '#FFFFFF88';
-    _visible: boolean = true;
+
+    private _visible: boolean = true;
 
     constructor (text: string, position: Vector3, hasTriangle?: boolean) {
         super();
@@ -88,8 +90,8 @@ export class Billboard extends UpdateObject {
     }
 
     destroy() {
-        this.textElement.remove();
-        this.triangleElement.remove();
+        if (this.textElement) { this.textElement.remove(); }
+        if (this.triangleElement) { this.triangleElement.remove(); }
         super.destroy();
     }
 }

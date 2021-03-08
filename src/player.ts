@@ -4,6 +4,8 @@ import { Billboard } from './billboard';
 import { UpdateObject } from './updateObject';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils'
 import { DialogBox } from './dialogbox';
+import { Team } from './team';
+import { isTemplateLiteral } from 'typescript';
 
 // TODOs
 // animation chaining - statemachine w/ action.crossFadeFrom()
@@ -23,7 +25,8 @@ export class Player extends UpdateObject {
     static accessories;
     static skins = {};
 
-    name : string;
+    id : string;
+    team : Team;
     model : Object3D;
     model_loaded : boolean = false;
     mixer : AnimationMixer;
@@ -32,11 +35,13 @@ export class Player extends UpdateObject {
     private _skin : string;
     private _accessory : string;
 
-    constructor ( name : string) {
+    constructor (id : string, team: Team) {
         super();
-        this.name = name;
+        this.id = id;
+        this.team = team;
+        team.addPlayer(this);
 
-        this.nametag = new Billboard(name, new Vector3(0, 0, 0));
+        this.nametag = new Billboard(id, new Vector3(0, 0, 0));
         this.nametag.visible = false;
 
         if (Player.gltf) {
@@ -75,6 +80,11 @@ export class Player extends UpdateObject {
         }     
     }
 
+    changeTeam(team: Team) {
+        this.team.removePlayer(this);
+        this.team = team;
+        team.addPlayer(this);
+    }
     
     say(message: string) {
         if (this.dialog_box) {

@@ -28,12 +28,12 @@ export class MQTTClient {
       
     _onConnectionLost(responseObject : any) {
         if (responseObject.errorCode !== 0) {
-            console.log("Connection lost:" + responseObject.errorMessage);
+            console.error("Connection lost: " + responseObject.errorMessage);
         }
     }
 
     _onFailure(message : any) {
-        console.log("Connection failed: " + message);
+        console.error("Connection failed: " + message);
     }
 
     publish(topic : string, payload : string) {
