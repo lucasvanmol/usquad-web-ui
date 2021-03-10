@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { UpdateObject } from "./updateObject";
 
-export class Billboard extends UpdateObject {
+export class TextBox3D extends UpdateObject {
     static canvas: HTMLCanvasElement;
 
     position: Vector3;
@@ -18,7 +18,7 @@ export class Billboard extends UpdateObject {
     constructor (text: string, position: Vector3, hasTriangle?: boolean) {
         super();
         this.position = position;
-        Billboard.canvas = UpdateObject.context.renderer.domElement;
+        TextBox3D.canvas = UpdateObject.context.renderer.domElement;
 
     
         this.textElement = document.createElement('div');
@@ -56,8 +56,8 @@ export class Billboard extends UpdateObject {
         position2D.project( UpdateObject.context.camera );
 
         // map to 2D screen space
-        position2D.x = Math.round( (   position2D.x + 1 ) * Billboard.canvas.width  / 2 );
-        position2D.y = Math.round( ( - position2D.y + 1 ) * Billboard.canvas.height / 2 );
+        position2D.x = Math.round( (   position2D.x + 1 ) * TextBox3D.canvas.width  / 2 );
+        position2D.y = Math.round( ( - position2D.y + 1 ) * TextBox3D.canvas.height / 2 );
     
         var elemCoords = {
             x: position2D.x - this.textOffsetWidth / 2,

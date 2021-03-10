@@ -1,6 +1,7 @@
 import { Vector3 } from "three";
-import { Billboard } from "./billboard"
-export class DialogBox extends Billboard {
+import { TextBox3D } from "./textbox3D"
+
+export class DialogBox3D extends TextBox3D {
     timeout: number;
     elapsedTime: number = 0;
     constructor(text: string, position: Vector3, timeout: number) {
