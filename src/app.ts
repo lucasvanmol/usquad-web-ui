@@ -55,7 +55,7 @@ const camera = new THREE.PerspectiveCamera(
     window.innerWidth / window.innerHeight,     // Ratio
     0.1, 1000                                   // Near / Far Clip
 );
-camera.position.set(0, 2, -15);
+camera.position.set(0, 2, -10);
 
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
@@ -64,9 +64,10 @@ controls.dampingFactor = 0.1;
 controls.target.set(0, 2, 1);
 //controls.minPolarAngle = controls.getPolarAngle();
 //controls.maxPolarAngle = controls.getPolarAngle();
+//controls.maxAzimuthAngle = controls.getAzimuthalAngle();
+//controls.minAzimuthAngle = controls.getAzimuthalAngle();
 let dist = camera.position.distanceTo(controls.target);
-//controls.minDistance = dist;
-//controls.maxDistance = dist;
+controls.maxDistance = 100;
 camera.updateMatrixWorld();
 
 var context : Context = {
@@ -264,9 +265,9 @@ function onMessageArrived(message : any) {
 const _cmdStringAddPlayer = "add";
 const _cmdStringRemovePlayer = "remove";
 const _cmdStringChangeSkin = "skin";
-const _cmdStringChangeAnimation = "anim";
+const _cmdStringChangeAnimation = "animation";
 const _cmdStringSay = "say";
-const _cmdStringChangeAccessory = "acc";
+const _cmdStringChangeAccessory = "accessory";
 const _cmdStringAssignTeam = "team";
 const _cmdStringSplitTeams = "split";
 

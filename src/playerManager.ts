@@ -1,14 +1,15 @@
 import { Player } from "./player";
 import { Vector3 } from "three";
 import { Team } from "./team";
+import { UpdateObject } from "./updateObject";
 
 export class PlayerManager {
     players: { [name: string]: Player } = {};
     teams: { [name: string]: Team } = {};
     defaultTeam: Team;
 
-    circleRadius: number = 8;          // min radius of player circle
-    circleMaxAngle: number = Math.PI;  // max angle between first and last player
+    circleRadius: number = 10;          // min radius of player circle
+    circleMaxAngle: number = 2 * Math.PI / 3;  // max angle between first and last player
     arcDistPlayers: number = 2;        // arc distance between adjacent players
     arcDistTeams: number = 5;          // arc distance between adjacent teams
 
@@ -45,17 +46,21 @@ export class PlayerManager {
         var angle = Math.PI/2 - (theta/2 * (numPlayers-1)) - (thetaTeams/2 * (numTeams-1));
         
         for (var teamName in this.teams) {
-            // Set team nametag position
-            if (this.teams[teamName].players.length !== 0) {
-                this.teams[teamName].nameTag.position = this.teams[teamName].players[0].position;
-                // Set team player position
+            var len = this.teams[teamName].players.length;
+            if (len !== 0) {
+                // Set player positions
                 this.teams[teamName].players.forEach(player => {
-                    // Set player position on circle & rotate to face center
                     player.rotation = new Vector3(0, -angle - Math.PI/2, 0);
                     player.position = new Vector3(Math.cos(angle), 0, Math.sin(angle)).multiplyScalar(this.circleRadius);
                     player.scale = scale;
                     angle += theta;
                 });
+
+                // Set team nametag position
+                let pos = this.teams[teamName].players[Math.floor(len/2)].position.clone();
+                pos.y -= 1;
+                this.teams[teamName].nameTag.position = pos;
+                
                 angle += thetaTeams;
             }     
         }

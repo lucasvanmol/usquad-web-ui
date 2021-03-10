@@ -13,9 +13,9 @@ describe('Usquad UI Test', () => {
 
         cy.publish('players/playerA', 'skin,alienA');
 
-        cy.publish('players/playerA', 'acc,cap');
+        cy.publish('players/playerA', 'accessory,cap');
 
-        cy.publish('players/playerA', 'anim,Run');
+        cy.publish('players/playerA', 'animation,Run');
 
         cy.publish('players/playerA', 'say,Hello!');
     })
@@ -33,9 +33,9 @@ describe('Usquad UI Test', () => {
 
         cy.publish('players/playerC', 'team,teamA');
 
-        cy.publish('teams/teamA', 'anim,Run');
+        cy.publish('teams/teamA', 'animation,Run');
 
-        cy.publish('teams/teamB', 'anim,CrouchIdle');
+        cy.publish('teams/teamB', 'animation,CrouchIdle');
 
         cy.publish('teams', 'reset');
 
