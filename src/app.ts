@@ -6,10 +6,11 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
 import config from './config'; 
-import { Color } from "three";
+import { Color, Texture } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { Player } from "./player";
 import * as Accessories from './accessories.json';
+import { Billboard } from "./billboard";
 
 
 
@@ -20,6 +21,7 @@ var mqttclient = new MQTTClient(
     config.clientID + ":" + Math.random().toString(36).substr(2, 5), // unique clientID to prevent reconnect loop
     onMessageArrived,
     onMQTTConnect,
+    onMQTTConnectionLost,
 );
 
 // Connect subscribe & publish buttons
@@ -216,55 +218,10 @@ var playerManager = new PlayerManager();
 var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
 addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player:"+ Math.random().toString(36).substr(2, 5)) });
 
-function load_ground() {
-    const texLoader = new THREE.TextureLoader();
-    const groundGeometry = new THREE.CylinderGeometry(10, 10, 0.5, 40, 1);
-    const groundMaterial = new THREE.MeshPhysicalMaterial( {
-        map: texLoader.load('assets/wood_planks.jpg', ( texture ) => {
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.x = 3;
-            texture.repeat.y = 3;
-        }),
-    });
-    const ground = new THREE.Mesh( groundGeometry, groundMaterial );
-    ground.position.set(0, -0.25, 0);
-    ground.visible = false;
-    scene.add( ground );
-    
-    const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
-    const planeMaterial = new THREE.MeshBasicMaterial( {color: 0xf5ca6e} );
-    const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-    plane.visible = false;
-    plane.rotation.x = -Math.PI/2;
-    plane.position.set(0, -0.20, 0);
-    plane.matrixAutoUpdate = false; //static object
-    plane.updateMatrix();
-    scene.add(plane);
-    
-    const objFolder = gui.addFolder('Objects');
-    objFolder.add(ground, 'visible').name('Stage Enabled');
-    objFolder.add(plane, 'visible').name('Plane Enabled');
-}
-load_ground();
+var billboard = new Billboard(UpdateObject.context);
 
 ////// SKYBOX ///////
-
-const pmremGenerator = new THREE.PMREMGenerator( renderer );
-const loader = new RGBELoader();
-
-// 'assets/gamrig_1k.hdr'
-// 'assets/st_fagans_interior_1k.hdr'
-loader.load('assets/gamrig_1k.hdr', ( texture ) => {
-    const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
-
-    //scene.background = envMap;
-    scene.background = new Color( 0xf5ca6e );
-    scene.environment = envMap;
-
-    texture.dispose();
-    pmremGenerator.dispose();
-});
+scene.background = new Color( 0xf5ca6e );
 
 window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
@@ -305,16 +262,40 @@ function onMessageArrived(message : any) {
 }
 
 const _cmdStringAddPlayer = "add";
+const _cmdStringRemovePlayer = "remove";
 const _cmdStringChangeSkin = "skin";
 const _cmdStringChangeAnimation = "anim";
 const _cmdStringSay = "say";
 const _cmdStringChangeAccessory = "acc";
 const _cmdStringAssignTeam = "team";
+const _cmdStringSplitTeams = "split";
 
-function playerCommandHandler(command : string[], playerID : string) {
+function playerCommandHandler(command: string[], playerID: string) {
+    if (playerID === "" || playerID === undefined) {
+        switch (command[0]) {
+            case _cmdStringChangeSkin:
+            case _cmdStringChangeAnimation:
+            case _cmdStringChangeAccessory:
+            case _cmdStringSay:
+            case _cmdStringAssignTeam:
+                for (let playerName in playerManager.players) {
+                    playerCommandHandler(command, playerName);
+                }
+                break;
+            
+            default:
+                console.warn(`${command} was not a recognized command on this topic`);
+                break;
+        }
+    }
+
     switch (command[0]) {
         case _cmdStringAddPlayer:
             playerManager.addPlayer(playerID);
+            break;
+        
+        case _cmdStringRemovePlayer:
+            playerManager.removePlayer(playerID);
             break;
 
         case _cmdStringChangeSkin:
@@ -343,7 +324,7 @@ function playerCommandHandler(command : string[], playerID : string) {
     }
 }
 
-function teamCommandHandler(command : string[], teamID : string) {
+function teamCommandHandler(command: string[], teamID: string) {
 
     switch (command[0]) {
 
@@ -362,7 +343,7 @@ function teamCommandHandler(command : string[], teamID : string) {
             }         
             break;
     
-        case "split":
+        case _cmdStringSplitTeams:
             let teamNames = command.splice(1);   
             let i = 0;
             let tot = Object.keys(playerManager.players).length;
@@ -395,6 +376,25 @@ function teamCommandHandler(command : string[], teamID : string) {
     }
 }
 
+function billboardCommandHandler(command: string[]) {
+    switch (command[0]) {
+        case "show":
+            if (command[1]) {
+                billboard.setBase64Image(command.splice(1).join(','));
+            } else {
+                billboard.mesh.visible = true;
+            }
+            break;
+        
+        case 'hide':
+            billboard.mesh.visible = false;
+            break
+
+        default:
+            break;
+    }
+}
+
 function commandHandler(topic, msg) {
     let command_topic = topic.split("/");
     let command = msg.split(",");
@@ -408,6 +408,10 @@ function commandHandler(topic, msg) {
             teamCommandHandler(command, command_topic[1]);
             break;
         
+        case "billboard":
+            billboardCommandHandler(command);
+            break;
+
         default:
             console.warn(`Unrecognized topic ${topic} for command ${msg}`)
             break;
@@ -418,8 +422,17 @@ function onMQTTConnect() {
     console.log("Connected to " + mqttclient.host + ":" + mqttclient.port);
     mqttclient.subscribe("players/#");
     mqttclient.subscribe("teams/#");
+    mqttclient.subscribe("billboard/#");
     subButton.disabled = false;
     pubButton.disabled = false;
+}
+
+function onMQTTConnectionLost(response) {
+    if (response.errorCode !== 0) {
+        console.error("Connection lost: " + response.errorMessage);
+        subButton.disabled = true;
+        subButton.disabled = true;
+    }
 }
 
 function _btnPublish() {

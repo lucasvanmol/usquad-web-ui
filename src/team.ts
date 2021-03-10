@@ -1,17 +1,17 @@
 import { Vector3 } from "three";
-import { Billboard } from "./billboard";
+import { TextBox3D } from "./textbox3D";
 import { Player } from "./player";
 
 export class Team {
     name: string;
     players: Player[];
-    nameTag: Billboard;
+    nameTag: TextBox3D;
 
     constructor (name: string, players?: Player[], disableNameTag?: boolean) {
         this.name = name;
         this.players = players || [];
 
-        this.nameTag = new Billboard(name, new Vector3(0, 0, 0));
+        this.nameTag = new TextBox3D(name, new Vector3(0, 0, 0));
         this.nameTag.visible = !(disableNameTag || false);
     }
 

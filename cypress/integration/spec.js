@@ -1,80 +1,44 @@
 describe('Usquad UI Test', () => {
-    it('Loads player models', () => {
+    beforeEach(() => {
         cy.visit('http://localhost:8000/');
+        cy.wait(100);
+    })
+
+    it('Loads player models', () => {
         cy.get('#add-player').click();
     })
 
     it('Can run player commands', () => {
-        cy.visit('http://localhost:8000/');
+        cy.publish('players/playerA', 'add');
 
-        cy.get('#pub-topic').type('players/playerA');
-        cy.get('#pub-payload').type('add');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerA', 'skin,alienA');
 
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('skin,alienA');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerA', 'acc,cap');
 
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('acc,cap');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerA', 'anim,Run');
 
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('anim,Run');
-        cy.get('#publish-button').click();
-
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('say,Hello!');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerA', 'say,Hello!');
     })
 
     it('Can run team commands', () => {
-        cy.visit('http://localhost:8000/');
+        cy.publish('players/playerA', 'add');
 
-        cy.get('#pub-topic').type('players/playerA');
-        cy.get('#pub-payload').type('add');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerB', 'add');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('players/playerB');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('add');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerC', 'add');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('players/playerC');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('add');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerA', 'team,teamA');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('players/playerA');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('team,teamA');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerB', 'team,teamB');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('players/playerB');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('team,teamB');
-        cy.get('#publish-button').click();
+        cy.publish('players/playerC', 'team,teamA');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('players/playerC');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('team,teamA');
-        cy.get('#publish-button').click();
+        cy.publish('teams/teamA', 'anim,Run');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('teams/teamA');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('anim,Run');
-        cy.get('#publish-button').click();
+        cy.publish('teams/teamB', 'anim,CrouchIdle');
 
-        cy.get('#pub-topic').clear();
-        cy.get('#pub-topic').type('teams/teamB');
-        cy.get('#pub-payload').clear();
-        cy.get('#pub-payload').type('anim,CrouchIdle');
-        cy.get('#publish-button').click();
+        cy.publish('teams', 'reset');
+
+        cy.publish('teams', 'split,team1,team2')
     })
 })

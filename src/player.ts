@@ -1,9 +1,9 @@
 import { AnimationMixer, Bone, Group, LoopOnce, Material, Mesh,  Object3D, Vector3 } from 'three';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { Billboard } from './billboard';
+import { TextBox3D } from './textbox3D';
 import { UpdateObject } from './updateObject';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils'
-import { DialogBox } from './dialogbox';
+import { DialogBox3D } from './dialogbox3D';
 import { Team } from './team';
 
 
@@ -21,8 +21,8 @@ export class Player extends UpdateObject {
     model : Object3D;
     model_loaded : boolean = false;
     mixer : AnimationMixer;
-    nametag : Billboard;
-    dialog_box : DialogBox;
+    nametag : TextBox3D;
+    dialog_box : DialogBox3D;
     private _skin : string;
     private _accessory : string;
 
@@ -32,7 +32,7 @@ export class Player extends UpdateObject {
         this.team = team;
         team.addPlayer(this);
 
-        this.nametag = new Billboard(id, new Vector3(0, 0, 0));
+        this.nametag = new TextBox3D(id, new Vector3(0, 0, 0));
         this.nametag.visible = false;
 
         if (Player.gltf) {
@@ -83,7 +83,7 @@ export class Player extends UpdateObject {
         }
         let p = this.position.clone();
         p.y += Player.dialog_height * this.scale;
-        this.dialog_box = new DialogBox(message, p, 3);
+        this.dialog_box = new DialogBox3D(message, p, 3);
     }
 
     set accessory(name: string) {
@@ -180,5 +180,19 @@ export class Player extends UpdateObject {
     update(delta : number) {
         if (this.mixer) { this.mixer.update( delta ) }
         if (!this.model_loaded && Player.gltf) { this.setModel() }
+    }
+
+    destroy() {
+        this.team.removePlayer(this);
+
+        UpdateObject.context.scene.remove( this.model );
+
+        this.model.traverse((object) => {
+            let obj = <any> object;
+            if (obj.geometry !== undefined) {
+                obj.geometry.dispose();
+                obj.material.dispose();
+            }
+        });    
     }
 }

@@ -13,8 +13,8 @@ export class PlayerManager {
     arcDistTeams: number = 5;          // arc distance between adjacent teams
 
     constructor () {
-        this.defaultTeam = new Team("default", [], true);
-        this.teams["default"] = this.defaultTeam;
+        this.defaultTeam = new Team("__default__", [], true);
+        this.teams["__default__"] = this.defaultTeam;
     }
 
     updatePlayerPositions() {
@@ -23,7 +23,7 @@ export class PlayerManager {
         var scale = Player.model_scale;
         var numPlayers = Object.keys(this.players).length;
         var numTeams = Object.keys(this.teams).length;
-        if ( this.defaultTeam.players.length === 0 && this.defaultTeam.name in this.teams )  {numTeams -= 1; }
+        if ( this.defaultTeam.players.length === 0 && this.defaultTeam.name in this.teams )   {numTeams -= 1;}
 
         // Scale player size & distance between players if there are too many players/teams
         let totalDist = this.arcDistPlayers * (numPlayers + numTeams - 2) + this.arcDistTeams * (numTeams - 1);
@@ -48,23 +48,30 @@ export class PlayerManager {
             // Set team nametag position
             if (this.teams[teamName].players.length !== 0) {
                 this.teams[teamName].nameTag.position = this.teams[teamName].players[0].position;
-            }
-            
-            // Set team player position
-            this.teams[teamName].players.forEach(player => {
-                // Set player position on circle & rotate to face center
-                player.rotation = new Vector3(0, -angle - Math.PI/2, 0);
-                player.position = new Vector3(Math.cos(angle), 0, Math.sin(angle)).multiplyScalar(this.circleRadius);
-                player.scale = scale;
-                angle += theta;
-            });
-            angle += thetaTeams;
+                // Set team player position
+                this.teams[teamName].players.forEach(player => {
+                    // Set player position on circle & rotate to face center
+                    player.rotation = new Vector3(0, -angle - Math.PI/2, 0);
+                    player.position = new Vector3(Math.cos(angle), 0, Math.sin(angle)).multiplyScalar(this.circleRadius);
+                    player.scale = scale;
+                    angle += theta;
+                });
+                angle += thetaTeams;
+            }     
         }
     }
 
     addPlayer(id: string) {
         this.players[id] = new Player(id, this.defaultTeam);
         this.updatePlayerPositions();
+    }
+
+    removePlayer(id: string) {
+        console.log(this.players);
+        this.players[id].destroy();
+        delete this.players[id];
+        console.log(this.players);
+        this.removePlayer;
     }
 
     assignTeam(playerName: string, teamName: string) {

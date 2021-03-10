@@ -5,13 +5,13 @@ export class MQTTClient {
     host : string;
     port : number;
 
-    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void, onConnectCallback? : () => void) {
+    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void, onConnectCallback? : () => void, connectionLostCallback? : (response: any) => void) {
         this.client = new MQTT.Client(host, port, clientID);
         this.host = host;
         this.port = port;
 
         // Callback handlers
-        this.client.onConnectionLost = this._onConnectionLost;
+        this.client.onConnectionLost = connectionLostCallback || this._onConnectionLost;
         this.client.onMessageArrived = messageArrivedCallback;
 
         this.client.connect({
