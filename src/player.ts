@@ -130,6 +130,7 @@ export class Player extends UpdateObject {
                 if ( object instanceof Mesh ) {
                     mat = (<Material>object.material).clone();
                     mat.map = Player.skins[name];
+                    mat.roughness = 0.85;
                     mat.needsUpdate = true;
                     object.material = mat;
                 } 

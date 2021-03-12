@@ -2,11 +2,8 @@ import * as THREE from "three";
 import { MQTTClient } from "./mqtt";
 import { PlayerManager } from './playerManager';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import * as dat from 'dat.gui';
 import { Context, UpdateObject } from "./updateObject";
 import config from './config'; 
-import { Color, Texture } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { Player } from "./player";
 import * as Accessories from './accessories.json';
@@ -33,7 +30,7 @@ pubButton.addEventListener('click', () => { _btnPublish() } );
 
 
 
-//////////////////////////////// SCENE, RENDERER, CAMERA, CONTROLS /////////////////////////////////
+/////////////////////////////////////////// SCENE SETUP ////////////////////////////////////////////
 
 const renderer = new THREE.WebGLRenderer( {antialias: true} );
 renderer.setPixelRatio( window.devicePixelRatio );
@@ -44,7 +41,7 @@ renderer.toneMappingExposure = 0.5;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xAAAAAA);
+scene.background = new THREE.Color(0xf5ca6e);
 
 const clock = new THREE.Clock();
 var objects: UpdateObject[] = [];
@@ -78,6 +75,11 @@ var context : Context = {
 };
 UpdateObject.context = context;
 
+var playerManager = new PlayerManager();
+var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
+addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player:"+ Math.random().toString(36).substr(2, 5)) });
+
+var billboard = new Billboard(UpdateObject.context);
 
 
 ////////////////////////////////////////// ASSET LOADING ///////////////////////////////////////////
@@ -141,6 +143,7 @@ gltfLoader.load(asset_url, ( gltf ) => {
         Player.animations[anim.name] = animInfo;
 
     });
+
 });
 
 for (var accessory in Accessories) {
@@ -156,41 +159,21 @@ manager.onLoad = () => {
     Player.skins = playerSkins;
 }
 
-
-
 ///////////////////////////////////////////// LIGHTING /////////////////////////////////////////////
 
-const gui = new dat.GUI();
-class ColorGUIHelper {
-    object;
-    prop: string;
-    constructor (object: any, prop: string) {
-        this.object = object;
-        this.prop = prop;
-    }
-    get value() { return `#${this.object[this.prop].getHexString()}`}
-    set value( hexString: string ) { this.object[this.prop].set(hexString) }
-}
-
-// Hemisphere Light
+// Ambient Light
 const ambientColor = 0xFFFFFF;
-const ambiIntensity = 0.5;
+const ambiIntensity = 0.8;
 const ambilight = new THREE.AmbientLight(ambientColor, ambiIntensity);
-ambilight.visible = false;
+ambilight.visible = true;
 scene.add(ambilight);
 
-const ambiFolder = gui.addFolder("Ambient Light");
-ambiFolder.addColor(new ColorGUIHelper(ambilight, 'color'), 'value').name('amibientColor');
-ambiFolder.add(ambilight, 'intensity', 0, 2, 0.01);
-ambiFolder.add(ambilight, 'visible').name('enabled');
-//ambiFolder.open()
-
 // Directional light
-const dirColor = 0xFFFFFF;
-const dirIntensity = 1.35;
+const dirColor = 0xffffbb;
+const dirIntensity = 2.0;
 const dirlight = new THREE.DirectionalLight(dirColor, dirIntensity);
 dirlight.position.set(0, 10, 0);
-dirlight.target.position.set(0, 9, 9);
+dirlight.target.position.set(2, 4, 6);
 scene.add(dirlight);
 scene.add(dirlight.target);
 const helper = new THREE.DirectionalLightHelper(dirlight);
@@ -198,31 +181,7 @@ dirlight.visible = true;
 helper.visible = false;
 scene.add(helper);
 
-const dirlightFolder = gui.addFolder("Directional Light");
-dirlightFolder.addColor(new ColorGUIHelper(dirlight, 'color'), 'value').name('color');
-dirlightFolder.add(dirlight, 'intensity', 0, 2, 0.01);
-dirlightFolder.add(dirlight.target.position, 'x', -10, 10).onChange(updateDirlight);
-dirlightFolder.add(dirlight.target.position, 'y', -10, 10).onChange(updateDirlight);
-dirlightFolder.add(dirlight.target.position, 'z', -10, 10).onChange(updateDirlight);
-dirlightFolder.add(dirlight, 'visible').name('enabled');
-dirlightFolder.add(helper, 'visible').onChange(updateDirlight).name('debug');
-//dirlightFolder.open();
-function updateDirlight() {
-    dirlight.target.updateMatrixWorld()
-    helper.update()
-}
-updateDirlight();
-
-////// ASSETS //////
-
-var playerManager = new PlayerManager();
-var addPlayerButton : HTMLButtonElement = <HTMLButtonElement>document.getElementById("add-player");
-addPlayerButton.addEventListener('click', () => { playerManager.addPlayer("Player:"+ Math.random().toString(36).substr(2, 5)) });
-
-var billboard = new Billboard(UpdateObject.context);
-
-////// SKYBOX ///////
-scene.background = new Color( 0xf5ca6e );
+////////////////////////////////////// RENDERING & ANIMATION ///////////////////////////////////////
 
 window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
@@ -251,6 +210,8 @@ function render() {
 }
 animate();
 
+
+///////////////////////////////////////// COMMAND HANDLING /////////////////////////////////////////
 
 function onMessageArrived(message : any) {
     console.log("onMessageArrived: "+message.payloadString);

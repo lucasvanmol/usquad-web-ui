@@ -1,7 +1,6 @@
 import { Player } from "./player";
 import { Vector3 } from "three";
 import { Team } from "./team";
-import { UpdateObject } from "./updateObject";
 
 export class PlayerManager {
     players: { [name: string]: Player } = {};
@@ -60,7 +59,7 @@ export class PlayerManager {
                 let pos = this.teams[teamName].players[Math.floor(len/2)].position.clone();
                 pos.y -= 1;
                 this.teams[teamName].nameTag.position = pos;
-                
+
                 angle += thetaTeams;
             }     
         }
