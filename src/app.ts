@@ -330,6 +330,7 @@ function teamCommandHandler(command: string[], teamID: string) {
                     playerManager.assignTeam(playerName, playerManager.defaultTeam.name);
                 }
             }
+            break;
 
         default:
             break;
