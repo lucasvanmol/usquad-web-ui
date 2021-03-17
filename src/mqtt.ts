@@ -5,19 +5,20 @@ export class MQTTClient {
     host : string;
     port : number;
 
-    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void, onConnectCallback? : () => void) {
+    constructor (host: string, port : number, clientID : string, messageArrivedCallback : (message : MQTT.Message) => void, onConnectCallback? : () => void, connectionLostCallback? : (response: any) => void) {
         this.client = new MQTT.Client(host, port, clientID);
         this.host = host;
         this.port = port;
 
         // Callback handlers
-        this.client.onConnectionLost = this._onConnectionLost;
+        this.client.onConnectionLost = connectionLostCallback || this._onConnectionLost;
         this.client.onMessageArrived = messageArrivedCallback;
 
         this.client.connect({
-            timeout: 3,
+            timeout: 10,
             onSuccess: onConnectCallback || this._onConnect,
             onFailure: this._onFailure,
+            reconnect: true,
         });
     }
 
@@ -27,12 +28,12 @@ export class MQTTClient {
       
     _onConnectionLost(responseObject : any) {
         if (responseObject.errorCode !== 0) {
-          console.log("Connection lost:" + responseObject.errorMessage);
+            console.error("Connection lost: " + responseObject.errorMessage);
         }
     }
 
     _onFailure(message : any) {
-        console.log("Connection failed: " + message);
+        console.error("Connection failed: " + message);
     }
 
     publish(topic : string, payload : string) {

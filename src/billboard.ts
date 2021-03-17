@@ -1,67 +1,53 @@
-import { Vector3 } from "three";
-import { UpdateObject, Context } from "./updateObject";
+import * as THREE from "three";
+import { Context } from "./updateObject";
 
-export class Billboard extends UpdateObject {
-    position : Vector3;
-    static canvas: HTMLCanvasElement;
-    textElement: HTMLDivElement;
-    textOffsetWidth: number;
-    textOffsetHeight: number;
-    _visible: boolean = true;
-
-    constructor (text: string, position: Vector3, context : Context) {
-        super(context);
-        this.position = position;
-        Billboard.canvas = UpdateObject.context.renderer.domElement;
-
+export class Billboard {
+    mesh: THREE.Mesh;
     
-        this.textElement = document.createElement('div');
-        this.textElement.style.position = 'absolute';
-        this.textElement.style.width = 'fit-content';
-        this.textElement.style.height = 'fit-content';
-        this.textElement.style.paddingLeft = '10px';
-        this.textElement.style.paddingRight = '10px';
-        this.textElement.style.fontSize = '18px';
-        this.textElement.style.backgroundColor = "rgba(255,255,255,0.5)";
-        this.textElement.style.borderRadius = '10px';
-        this.textElement.innerHTML = text;
-        document.body.appendChild(this.textElement);
-        this.textOffsetWidth = this.textElement.offsetWidth;
-        this.textOffsetHeight = this.textElement.offsetHeight;
+    constructor(context: Context) {
+        let image: HTMLImageElement = new Image();
+        image.src = '';
+        let texture = new THREE.Texture();
+        texture.image = image;
+        image.onload = () => {
+            texture.needsUpdate = true;
+        };
+        texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
+        const billboardGeometry = new THREE.PlaneGeometry(8,4.5, 1, 1);
+        const billboardMaterial = new THREE.MeshBasicMaterial( {
+            map: texture
+        });
+        this.mesh = new THREE.Mesh( billboardGeometry, billboardMaterial );
+        this.mesh.position.set(0, 4, 10);
+        this.mesh.rotation.set(0, Math.PI, 0);
+        this.mesh.visible = false;
+        context.scene.add( this.mesh );
+
+        texture.dispose();
     }
 
+    setBase64Image(base64Image: string) {
+        let image: HTMLImageElement = new Image();
+        image.src = base64Image;
+        let texture = new THREE.Texture();
+        texture.image = image;
+        image.onload = () => {
+            texture.needsUpdate = true;
+            this.mesh.visible = true;
+        };
+        texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
 
-    update(delta : number) {
-        var position2D = new Vector3().copy(this.position);
-        // map to normalized device coordinate (NDC) space
-        position2D.project( UpdateObject.context.camera );
+        var mat; // https://discourse.threejs.org/t/giving-a-glb-a-texture-in-code/15071/6
 
-        // map to 2D screen space
-        position2D.x = Math.round( (   position2D.x + 1 ) * Billboard.canvas.width  / 2 );
-        position2D.y = Math.round( ( - position2D.y + 1 ) * Billboard.canvas.height / 2 );
-    
-        var elemCoords = {
-            x: position2D.x - this.textOffsetWidth / 2,
-            y: position2D.y - this.textOffsetHeight /2
-        }
-        this.textElement.style.left = elemCoords.x + 'px';
-        this.textElement.style.top = elemCoords.y + 'px';
-        // TODO change fontSize based on distance to camera
-        // TODO change zindex based on depth (minor)
-    }
+        this.mesh.traverse( (object) => {
 
-    set visible(val: boolean) {
-        if (this._visible !== val) {
-            this._visible = val;
-            if (val) {
-                document.body.appendChild(this.textElement);
-            } else {
-                document.body.removeChild(this.textElement);
-            }
-        }
-    }
-
-    get visible() {
-        return this._visible;
+            if ( object instanceof THREE.Mesh ) {
+                mat = (<THREE.Material>object.material).clone();
+                mat.map = texture;
+                mat.needsUpdate = true;
+                object.material = mat;
+            } 
+            
+        });
     }
 }
