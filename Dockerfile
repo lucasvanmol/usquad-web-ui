@@ -20,9 +20,11 @@ COPY --chown=node:node . .
 
 RUN npm run build
 
+# Fix asset loading
 RUN  mv ./public/assets ./dist/
 
-EXPOSE 8080
+FROM sebp/lighttpd:latest
 
-# Use express to server static files produced by webpack
-CMD [ "node", "server.js" ]
+RUN apk update
+
+COPY --from=0 /home/node/app/dist /var/www/localhost/htdocs
