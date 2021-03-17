@@ -2,21 +2,15 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const DotenvWebpackPlugin = require("dotenv-webpack");
 
+const ASSET_PATH = process.env.ASSET_PATH || '/';
+
 module.exports = {
     entry: "./src/app.ts", 
     output: {
-        filename: "js/bundle.js", 
+        filename: "js/bundle.js",
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
-    },
-    devServer: {
-        host: "0.0.0.0",
-        port: 8000, 
-        disableHostCheck: true,
-        contentBase: "public",
-        publicPath: "/",
-        hot: true,
     },
     module: {
         rules: [
@@ -35,5 +29,4 @@ module.exports = {
         new CleanWebpackPlugin(),
         new DotenvWebpackPlugin()
     ],
-    mode: "development",
 };

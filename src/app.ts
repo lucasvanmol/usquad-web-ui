@@ -9,13 +9,11 @@ import { Player } from "./player";
 import * as Accessories from './accessories.json';
 import { Billboard } from "./billboard";
 
-
-
 //////////////////////////////////////////// MQTT SETUP ////////////////////////////////////////////
 
 var mqttclient = new MQTTClient(
-    config.host, config.port, 
-    config.clientID + ":" + Math.random().toString(36).substr(2, 5), // unique clientID to prevent reconnect loop
+    config.MQTT_HOST, config.MQTT_PORT, 
+    config.MQTT_CLIENT_ID + ":" + Math.random().toString(36).substr(2, 5), // unique clientID to prevent reconnect loop
     onMessageArrived,
     onMQTTConnect,
     onMQTTConnectionLost,
@@ -57,12 +55,12 @@ camera.position.set(0, 2, -10);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-//controls.enablePan = false;
+controls.enablePan = false;
 controls.target.set(0, 2, 1);
-//controls.minPolarAngle = controls.getPolarAngle();
-//controls.maxPolarAngle = controls.getPolarAngle();
-//controls.maxAzimuthAngle = controls.getAzimuthalAngle();
-//controls.minAzimuthAngle = controls.getAzimuthalAngle();
+controls.minPolarAngle = controls.getPolarAngle();
+controls.maxPolarAngle = controls.getPolarAngle();
+controls.maxAzimuthAngle = controls.getAzimuthalAngle();
+controls.minAzimuthAngle = controls.getAzimuthalAngle();
 let dist = camera.position.distanceTo(controls.target);
 controls.maxDistance = 100;
 camera.updateMatrixWorld();
@@ -118,7 +116,7 @@ skin_files.forEach(file => {
 
 ///////////// CHARACTER & ANIMATIONS /////////////
 
-const asset_url = 'assets/characterMediumAllAnimations.glb'; 
+const asset_url = "assets/characterMediumAllAnimations.glb"; 
 
 // Animations in gltf.animations that need to be looped
 const loopedAnimations = ["CrouchIdle", "CrouchWalk", "Idle", "RacingIdle", "Run", "Walk", "Jump"]

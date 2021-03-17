@@ -1,5 +1,5 @@
 export default {
-    host: process.env.HOST || "broker.emqx.io",
-    port: parseInt(process.env.PORT) || 8083,
-    clientID: process.env.CLIENT_ID || "clientID",
+    MQTT_HOST: process.env.MQTT_HOST || "broker.emqx.io",
+    MQTT_PORT: parseInt(process.env.MQTT_PORT) || 8083,
+    MQTT_CLIENT_ID: process.env.CLIENT_ID || "clientID",
 }
