@@ -71,10 +71,8 @@ export class PlayerManager {
     }
 
     removePlayer(id: string) {
-        console.log(this.players);
         this.players[id].destroy();
         delete this.players[id];
-        console.log(this.players);
     }
 
     assignTeam(playerName: string, teamName: string) {

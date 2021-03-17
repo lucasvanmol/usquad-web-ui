@@ -218,7 +218,6 @@ function onMessageArrived(message : any) {
     subs.innerHTML = "[" + message.destinationName + "]: " + message.payloadString + "<br />";
     
     commandHandler(message.destinationName, message.payloadString);
-    console.log(playerManager.teams);
 }
 
 const _cmdStringAddPlayer = "add";
